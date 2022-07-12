@@ -6,6 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
+import it.polito.tdp.crimes.model.Adiacenza;
 import it.polito.tdp.crimes.model.Event;
 
 
@@ -53,5 +55,119 @@ public class EventsDao {
 			return null ;
 		}
 	}
+	public List<String> getCategotyID(){
+		String sql="select distinct offense_category_id "
+				+ "from events "
+				+ "order by offense_category_id";
+		List<String> list= new ArrayList<>();
+		try {
+			Connection conn = DBConnect.getConnection() ;
 
+			PreparedStatement st = conn.prepareStatement(sql) ;
+			
+			ResultSet res = st.executeQuery() ;
+			
+			while(res.next()) {
+				list.add(res.getString("offense_category_id"));
+				
+			}
+			
+			conn.close();
+			return list ;
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null ;
+		}
+	}
+	public List<String> getMese() {
+		String sql="select distinct month(reported_date) as month "
+				+ "from events "
+				+ "order by month(reported_date)";
+		
+		List<String> list= new ArrayList<>();
+		try {
+			Connection conn = DBConnect.getConnection() ;
+
+			PreparedStatement st = conn.prepareStatement(sql) ;
+			
+			ResultSet res = st.executeQuery() ;
+			
+			while(res.next()) {
+				list.add(res.getString("month"));
+				
+			}
+			
+			conn.close();
+			return list ;
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null ;
+		}
+	}
+	public List<String> getVertici(String category, String month){
+		String sql="select distinct offense_type_id "
+				+ "from events "
+				+ "where offense_category_id=? and month(reported_date)=?";
+		List<String> list= new ArrayList<>();
+		try {
+			Connection conn = DBConnect.getConnection() ;
+
+			PreparedStatement st = conn.prepareStatement(sql) ;
+			st.setString(1, category);
+			st.setString(2, month);
+			ResultSet res = st.executeQuery() ;
+			
+			while(res.next()) {
+				list.add(res.getString("offense_type_id"));
+				
+			}
+			
+			conn.close();
+			return list ;
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null ;
+		}
+	}
+	public List<Adiacenza> getArchi(String category, String day){
+		String sql="SELECT e1.offense_type_id AS ot1, e2.offense_type_id AS ot2, COUNT(DISTINCT e1.neighborhood_id) AS peso  "
+				+ "FROM EVENTS AS e1, EVENTS AS e2 "
+				+ "WHERE e1.offense_type_id > e2.offense_type_id "
+				+ "AND e1.offense_category_id = ? "
+				+ "AND e1.offense_category_id = e2.offense_category_id "
+				+ "AND month(e1.reported_date) = ? "
+				+ "AND month(e1.reported_date) = month(e2.reported_date) "
+				+ "GROUP BY e1.offense_type_id, e2.offense_type_id "
+				+ "HAVING COUNT(DISTINCT e1.neighborhood_id) > 0";
+		
+		List <Adiacenza> list= new ArrayList<>();
+		try {
+			Connection conn = DBConnect.getConnection() ;
+
+			PreparedStatement st = conn.prepareStatement(sql) ;
+			st.setString(1, category);
+			st.setString(2, day);
+			ResultSet res = st.executeQuery() ;
+			
+			while(res.next()) {
+				list.add(new Adiacenza(res.getString("ot1"), res.getString("ot2"), res.getInt("peso")));
+				
+			}
+			
+			conn.close();
+			return list ;
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null ;
+		}
+	}
+	
 }
